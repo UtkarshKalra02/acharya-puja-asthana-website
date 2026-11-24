@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.spiritstars.in/sitemap.xml
+Sitemap: https://utkarshkalra02.github.io/acharya-puja-asthana-website/sitemap.xml

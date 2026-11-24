@@ -33,14 +33,19 @@
   function wa(text){ return "https://wa.me/" + WA + "?text=" + encodeURIComponent(text); }
   function share(text){ return "https://wa.me/?text=" + encodeURIComponent(text + "\n\nFind yours free: " + PAGE); }
 
-  function locked(box){
-    box.innerHTML = '<div class="calc-lock"><h3>You’ve used today’s 3 free readings</h3>' +
-      '<p>Come back tomorrow for more — or get a complete, personalised numerology report from Acharya Puja Asthana, with a free 3-year prediction.</p>' +
-      '<div class="btn-row" style="justify-content:center"><a class="btn btn-gold" target="_blank" rel="noopener" href="' + wa("Namaste, I used the free numerology calculator and would like a complete numerology consultation (₹2,300).") + '">Get my full report</a></div></div>';
-    box.hidden = false; box.scrollIntoView({behavior:"smooth", block:"center"});
+  /* Free readings used up: send the visitor straight to WhatsApp with their details pre-filled */
+  function toWhatsApp(box, text){
+    var url = wa(text + "\n\n(I have used today's 3 free readings on the website calculator.)");
+    track("calculator_limit_whatsapp");
+    box.hidden = false;
+    box.innerHTML = '<p class="calc-left">Today\u2019s free readings are used up — opening WhatsApp so Acharya Puja Asthana can give you the full reading. ' +
+      '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--gold-2);text-decoration:underline">Tap here if it didn\u2019t open</a>.</p>';
+    var w = null;
+    try{ w = window.open(url, "_blank"); if (w) w.opener = null; }catch(e){}
+    if (!w){  /* pop-up blocked: go there in this tab */ try{ window.location.href = url; }catch(e){} }
   }
-  function gate(box){
-    if (left() <= 0){ locked(box); return false; }
+  function gate(box, text){
+    if (left() <= 0){ toWhatsApp(box, text); return false; }
     bump(); paintLeft(); track("calculator_use"); return true;
   }
   function track(n){ try{ if (window.gtag) gtag("event", n); }catch(e){} }
@@ -65,7 +70,7 @@
     e.preventDefault();
     var box = document.getElementById("out-dob"), v = f1.dob.value;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(v)){ box.hidden = false; box.innerHTML = '<p class="calc-err">Please choose your full date of birth.</p>'; return; }
-    if (!gate(box)) return;
+    if (!gate(box, "Namaste, I would like a numerology consultation. My date of birth is " + v.split("-").reverse().join("-") + ".")) return;
     var p = v.split("-"), day = +p[2], mul = reduce(day), bha = reduce(digitSum(v));
     var digits = (p[2] + p[1] + p[0]).replace(/0/g,"").split("").map(Number);
     if (day > 9) digits.push(mul);   /* common practice: add Mulank when the birth day is two digits */
@@ -95,7 +100,7 @@
     e.preventDefault();
     var box = document.getElementById("out-name"), name = f2.fullname.value.trim(), letters = name.toLowerCase().replace(/[^a-z]/g,"");
     if (letters.length < 2){ box.hidden = false; box.innerHTML = '<p class="calc-err">Please type your name in English letters.</p>'; return; }
-    if (!gate(box)) return;
+    if (!gate(box, "Namaste, I would like a numerology consultation for my name: " + name + ".")) return;
     var total = letters.split("").reduce(function(a,c){ return a + CHAL[c]; },0), n = reduce(total);
     var html = '<div class="calc-nums">' + numBlock("Name number", n) + numBlock("Compound", total, "before reduction") + '</div>' +
       '<p><b>' + esc(name) + '</b> vibrates to <b>' + n + '</b> — ' + N[n].p + '. ' + N[n].t + '</p>' +
@@ -110,7 +115,7 @@
     e.preventDefault();
     var box = document.getElementById("out-mobile"), mob = f3.mobile.value.replace(/\D/g,"").slice(-10), d = +f3.day.value;
     if (mob.length !== 10 || !(d >= 1 && d <= 31)){ box.hidden = false; box.innerHTML = '<p class="calc-err">Enter a 10-digit mobile number and your day of birth (1–31).</p>'; return; }
-    if (!gate(box)) return;
+    if (!gate(box, "Namaste, I would like to check if my mobile number " + mob + " suits me. My day of birth is " + d + ".")) return;
     var mn = reduce(digitSum(mob)), mul = reduce(d);
     var verdict = mn === mul || FRIEND[mul].indexOf(mn) > -1 ? ["Supportive","This number is friendly to your Mulank."]
       : ENEMY[mul].indexOf(mn) > -1 ? ["Not ideal","This number clashes with your Mulank — worth reviewing before your next SIM change."]
